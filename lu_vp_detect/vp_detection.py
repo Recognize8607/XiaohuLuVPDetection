@@ -300,7 +300,7 @@ class VPDetection(object):
 
         # Get indices for every unique pair of lines
         combos = list(combinations(range(self.__lines.shape[0]), 2))
-        combos = np.asarray(combos, dtype=np.int)
+        combos = np.asarray(combos, dtype=int)
 
         # For each pair, determine where the lines intersect
         pt_intersect = np.cross(
@@ -333,8 +333,8 @@ class VPDetection(object):
         lon = np.arctan2(X, Y) + np.pi
 
         # Get corresponding bin locations
-        la_bin = (lat / bin_size).astype(np.int)
-        lon_bin = (lon / bin_size).astype(np.int)
+        la_bin = (lat / bin_size).astype(int)
+        lon_bin = (lon / bin_size).astype(int)
         la_bin[la_bin >= num_bins_lat] = num_bins_lat - 1
         lon_bin[lon_bin >= num_bins_lon] = num_bins_lon - 1
 
@@ -373,7 +373,7 @@ class VPDetection(object):
         )
 
         # Create ID array for VPs
-        ids = np.arange(N).astype(np.int)
+        ids = np.arange(N).astype(int)
         ids = np.column_stack([ids, ids, ids])
         ids = ids[mask]
 
@@ -382,8 +382,8 @@ class VPDetection(object):
         lon = np.arctan2(vp_hypos[:, :, 0][mask], vp_hypos[:, :, 1][mask]) + np.pi
 
         # Determine which bin they map to
-        la_bin = (lat / bin_size).astype(np.int)
-        lon_bin = (lon / bin_size).astype(np.int)
+        la_bin = (lat / bin_size).astype(int)
+        lon_bin = (lon / bin_size).astype(int)
         la_bin[la_bin == 90] = 89
         lon_bin[lon_bin == 360] = 359
 
@@ -403,8 +403,8 @@ class VPDetection(object):
         # Find the coordinate with the largest vertical value
         # This will be the last column of the output
         z_idx = np.argmax(np.abs(vps_2D[:, 1]))
-        ind = np.arange(3).astype(np.int)
-        mask = np.ones(3, dtype=np.bool)
+        ind = np.arange(3).astype(int)
+        mask = np.ones(3, dtype=bool)
         mask[z_idx] = False
         ind = ind[mask]
 
@@ -564,11 +564,11 @@ class VPDetection(object):
         colours = 255 * np.eye(3)
         # BGR format
         # First row is red, second green, third blue
-        colours = colours[:, ::-1].astype(np.int).tolist()
+        colours = colours[:, ::-1].astype(int).tolist()
 
         # Draw the outlier lines as black
         all_clusters = np.hstack(self.__clusters)
-        status = np.ones(self.__lines.shape[0], dtype=np.bool)
+        status = np.ones(self.__lines.shape[0], dtype=bool)
         status[all_clusters] = False
         ind = np.where(status)[0]
         for (x1, y1, x2, y2) in self.__lines[ind]:
