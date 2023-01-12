@@ -1,5 +1,7 @@
 import argparse
 
+import numpy as np
+
 from lu_vp_detect import VPDetection
 
 # Set up argument parser + options
@@ -30,6 +32,13 @@ parser.add_argument(
     help="Focal length of the camera (in pixels)",
 )
 parser.add_argument(
+    "-at",
+    "--angle-tol",
+    default=np.pi / 3,
+    type=float,
+    help="Minimum angle tolerance (in radians) for detecting lines",
+)
+parser.add_argument(
     "-d", "--debug", action="store_true", help="Turn on debug image mode"
 )
 parser.add_argument(
@@ -57,6 +66,7 @@ def main():
     length_thresh = args.length_thresh
     principal_point = args.principal_point
     focal_length = args.focal_length
+    angle_tol = args.angle_tol
     debug_mode = args.debug
     debug_show = args.debug_show
     debug_path = args.debug_path
@@ -66,9 +76,10 @@ def main():
     print("Seed: {}".format(seed))
     print("Line length threshold: {}".format(length_thresh))
     print("Focal length: {}".format(focal_length))
+    print("Angle tolerance: {}".format(angle_tol))
 
     # Create object
-    vpd = VPDetection(length_thresh, principal_point, focal_length, seed)
+    vpd = VPDetection(length_thresh, principal_point, focal_length, angle_tol, seed)
 
     # Run VP detection algorithm
     vps = vpd.find_vps(input_path)

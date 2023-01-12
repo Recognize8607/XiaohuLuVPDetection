@@ -41,6 +41,7 @@ The main parameters for affecting performance are:
   (in pixels). The default is to assume the image centre.
 - `focal_length`: The focal length of the camera (in pixels). The default
   is 1500.
+- `angle_tol`: Minimum angle tolerance (in radians) for detecting lines. Default is PI/3.
 - `seed`: An optional integer ID that specifies the seed for reproducibility
   as part of the algorithm uses RANSAC. Default is `None` so no seed is used.
 
@@ -108,9 +109,9 @@ image to file by setting the right parameters.
 
 ```
 $ run_vp_detect -h
-usage: run_vp_detect [-h] -i IMAGE_PATH [-lt LENGTH_THRESH]
-                     [-pp PRINCIPAL_POINT PRINCIPAL_POINT] [-f FOCAL_LENGTH]
-                     [-d] [-ds] [-dp DEBUG_PATH] [-s SEED]
+usage: run_vp_detect  [-h] -i IMAGE_PATH [-lt LENGTH_THRESH]
+                      [-pp PRINCIPAL_POINT PRINCIPAL_POINT] [-f FOCAL_LENGTH]
+                      [-at ANGLE_TOL] [-d] [-ds] [-dp DEBUG_PATH] [-s SEED]
 
 Main script for Lu's Vanishing Point Algorithm
 
@@ -125,6 +126,8 @@ optional arguments:
                         centre)
   -f FOCAL_LENGTH, --focal-length FOCAL_LENGTH
                         Focal length of the camera (in pixels)
+  -at ANGLE_TOL, --angle-tol ANGLE_TOL
+                        Minimum angle tolerance (in radians) for detecting lines
   -d, --debug           Turn on debug image mode
   -ds, --debug-show     Show the debug image in an OpenCV window
   -dp DEBUG_PATH, --debug-path DEBUG_PATH

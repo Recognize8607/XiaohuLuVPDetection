@@ -20,22 +20,28 @@ class VPDetection(object):
         length_thresh: Line segment detector threshold (default=30)
         principal_point: Principal point of the image (in pixels)
         focal_length: Focal length of the camera (in pixels)
+        angle_tol: Minimum angle tolerance (in radians) for detecting lines
         seed: Seed for reproducibility due to RANSAC
     """
 
     def __init__(
-        self, length_thresh=30, principal_point=None, focal_length=1500, seed=None
+        self,
+        length_thresh=30,
+        principal_point=None,
+        focal_length=1500,
+        angle_tol=np.pi / 3,
+        seed=None,
     ):
         self._length_thresh = length_thresh
         self._principal_point = principal_point
         self._focal_length = focal_length
-        self._angle_thresh = np.pi / 30  # For displaying debug image
         self._vps = None  # For storing the VPs in 3D space
         self._vps_2D = None  # For storing the VPs in 2D space
         self.__img = None  # Stores the image locally
         self.__clusters = None  # Stores which line index maps to what VP
         self.__tol = 1e-8  # Tolerance for floating point comparison
-        self.__angle_tol = np.pi / 3  # (pi / 180 * (60 degrees)) = +/- 30 deg
+        self._angle_tol = angle_tol  # (pi / 180 * (60 degrees)) = +/- 30 deg
+        self._angle_thresh = angle_tol / 10  # For displaying debug image
         self.__lines = None  # Stores the line detections internally
         self.__zero_value = 0.001  # Threshold to check augmented coordinate
         # Anything less than __tol gets set to this
@@ -130,6 +136,32 @@ class VPDetection(object):
             raise ValueError("Invalid focal length: {}".format(value))
 
         self._focal_length = value
+
+    @property
+    def angle_tol(self):
+        """
+        Angle tolerance for VP detection algorithm
+
+        Returns:
+            The angle tolerance in radians
+        """
+        return self._angle_tol
+
+    @angle_tol.setter
+    def angle_tol(self, value):
+        """
+        Angle tolerance for VP detection algorithm
+
+        Args:
+            value: The angle tolerance in radians
+
+        Raises:
+            ValueError: If the input is 0 or negative
+        """
+        if value < self.__tol:  # If the angle tolerance is too small, reject
+            raise ValueError("Invalid angle tolerance: {}".format(value))
+
+        self._angle_tol = value
 
     @property
     def vps(self):
@@ -317,7 +349,7 @@ class VPDetection(object):
             self.__orientations[combos[:, 0]] - self.__orientations[combos[:, 1]]
         )
         ang = np.minimum(np.pi - ang, ang)
-        mask = np.logical_and(mask, np.abs(ang) <= self.__angle_tol)
+        mask = np.logical_and(mask, np.abs(ang) <= self._angle_tol)
 
         # Get the points, angles and combinations that are
         # left
