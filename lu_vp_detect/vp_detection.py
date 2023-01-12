@@ -6,9 +6,10 @@ http://xiaohulugo.github.io/papers/Vanishing_Point_Detection_WACV2017.pdf.
 Author: Ray Phan (https://github.com/rayryeng)
 """
 
+from itertools import combinations
+
 import cv2
 import numpy as np
-from itertools import combinations
 
 
 class VPDetection(object):
@@ -22,11 +23,9 @@ class VPDetection(object):
         seed: Seed for reproducibility due to RANSAC
     """
 
-    def __init__(self,
-                 length_thresh=30,
-                 principal_point=None,
-                 focal_length=1500,
-                 seed=None):
+    def __init__(
+        self, length_thresh=30, principal_point=None, focal_length=1500, seed=None
+    ):
         self._length_thresh = length_thresh
         self._principal_point = principal_point
         self._focal_length = focal_length
@@ -43,7 +42,7 @@ class VPDetection(object):
         self.__seed = seed  # Set seed for reproducibility
         noise_ratio = 0.5  # Outlier/inlier ratio for RANSAC estimation
         # Probability of all samples being inliers
-        p = (1.0 / 3.0) * ((1.0 - noise_ratio)**2.0)
+        p = (1.0 / 3.0) * ((1.0 - noise_ratio) ** 2.0)
 
         # Total number of iterations for RANSAC
         conf = 0.9999
@@ -71,7 +70,7 @@ class VPDetection(object):
             ValueError: If the threshold is 0 or negative
         """
         if value <= 0:
-            raise ValueError('Invalid threshold: {}'.format(value))
+            raise ValueError("Invalid threshold: {}".format(value))
 
         self._length_thresh = value
 
@@ -99,11 +98,10 @@ class VPDetection(object):
             two elements
         """
         try:
-            assert isinstance(value,
-                              (list, tuple)) and not isinstance(value, str)
+            assert isinstance(value, (list, tuple)) and not isinstance(value, str)
             assert len(value) == 2
         except AssertionError:
-            raise ValueError('Invalid principal point: {}'.format(value))
+            raise ValueError("Invalid principal point: {}".format(value))
 
         self._length_thresh = value
 
@@ -129,7 +127,7 @@ class VPDetection(object):
             ValueError: If the input is 0 or negative
         """
         if value < self.__tol:  # If the focal length is too small, reject
-            raise ValueError('Invalid focal length: {}'.format(value))
+            raise ValueError("Invalid focal length: {}".format(value))
 
         self._focal_length = value
 
@@ -205,10 +203,8 @@ class VPDetection(object):
 
         # Store the equations of the line, lengths and orientations
         # for each line segment
-        p1 = np.column_stack((self.__lines[:, :2], np.ones(N,
-                                                           dtype=np.float32)))
-        p2 = np.column_stack((self.__lines[:, 2:], np.ones(N,
-                                                           dtype=np.float32)))
+        p1 = np.column_stack((self.__lines[:, :2], np.ones(N, dtype=np.float32)))
+        p2 = np.column_stack((self.__lines[:, 2:], np.ones(N, dtype=np.float32)))
         cross_p = np.cross(p1, p2)
         dx = p1[:, 0] - p2[:, 0]
         dy = p1[:, 1] - p2[:, 1]
@@ -228,8 +224,7 @@ class VPDetection(object):
         # First dimension - VP triplet proposal for a RANSAC iteration
         # Second dimension - VPs themselves
         # Third dimension - VP component
-        vp_hypos = np.zeros((self.__ransac_iter * num_bins_vp2, 3, 3),
-                            dtype=np.float32)
+        vp_hypos = np.zeros((self.__ransac_iter * num_bins_vp2, 3, 3), dtype=np.float32)
 
         i = 0
 
@@ -266,11 +261,9 @@ class VPDetection(object):
             phi = np.arctan(-vp1[2] / kk)
 
             # Convert back to Cartesian coordinates
-            vp2 = np.column_stack([
-                np.sin(phi) * np.sin(la),
-                np.sin(phi) * np.cos(la),
-                np.cos(phi)
-            ])
+            vp2 = np.column_stack(
+                [np.sin(phi) * np.sin(la), np.sin(phi) * np.cos(la), np.cos(phi)]
+            )
 
             # Enforce points at infinity to be finite
             vp2[np.abs(vp2[:, 2]) < self.__tol, 2] = self.__zero_value
@@ -284,9 +277,9 @@ class VPDetection(object):
             vp3[vp3[:, 2] < 0, :] *= -1.0
 
             # Place proposals in corresponding locations
-            vp_hypos[i * num_bins_vp2:(i + 1) * num_bins_vp2, 0, :] = vp1
-            vp_hypos[i * num_bins_vp2:(i + 1) * num_bins_vp2, 1, :] = vp2
-            vp_hypos[i * num_bins_vp2:(i + 1) * num_bins_vp2, 2, :] = vp3
+            vp_hypos[i * num_bins_vp2 : (i + 1) * num_bins_vp2, 0, :] = vp1
+            vp_hypos[i * num_bins_vp2 : (i + 1) * num_bins_vp2, 1, :] = vp2
+            vp_hypos[i * num_bins_vp2 : (i + 1) * num_bins_vp2, 2, :] = vp3
 
             # Move to the next iteration
             i += 1
@@ -310,8 +303,9 @@ class VPDetection(object):
         combos = np.asarray(combos, dtype=np.int)
 
         # For each pair, determine where the lines intersect
-        pt_intersect = np.cross(self.__cross_p[combos[:, 0]],
-                                self.__cross_p[combos[:, 1]])
+        pt_intersect = np.cross(
+            self.__cross_p[combos[:, 0]], self.__cross_p[combos[:, 1]]
+        )
 
         # Ignore if points are at infinity
         mask = np.abs(pt_intersect[:, 2]) >= self.__tol
@@ -319,8 +313,9 @@ class VPDetection(object):
         # To determine if two points map to the same VP in spherical
         # coordinates, their difference in angle must be less than
         # some threshold
-        ang = np.abs(self.__orientations[combos[:, 0]] -
-                     self.__orientations[combos[:, 1]])
+        ang = np.abs(
+            self.__orientations[combos[:, 0]] - self.__orientations[combos[:, 1]]
+        )
         ang = np.minimum(np.pi - ang, ang)
         mask = np.logical_and(mask, np.abs(ang) <= self.__angle_tol)
 
@@ -331,10 +326,8 @@ class VPDetection(object):
         combos = combos[mask]
 
         # Determine corresponding lat and lon mapped to the sphere
-        X = (pt_intersect[:, 0] /
-             pt_intersect[:, 2]) - self._principal_point[0]
-        Y = (pt_intersect[:, 1] /
-             pt_intersect[:, 2]) - self._principal_point[1]
+        X = (pt_intersect[:, 0] / pt_intersect[:, 2]) - self._principal_point[0]
+        Y = (pt_intersect[:, 1] / pt_intersect[:, 2]) - self._principal_point[1]
         Z = self._focal_length
         lat = np.arccos(Z / np.sqrt(X * X + Y * Y + Z * Z))
         lon = np.arctan2(X, Y) + np.pi
@@ -350,18 +343,18 @@ class VPDetection(object):
         # of bincount method, then reshape back to 2D
         bin_num = la_bin * num_bins_lon + lon_bin
         weights = np.sqrt(
-            self.__lengths[combos[:, 0]] *
-            self.__lengths[combos[:, 1]]) * (np.sin(2.0 * ang) + 0.2)
+            self.__lengths[combos[:, 0]] * self.__lengths[combos[:, 1]]
+        ) * (np.sin(2.0 * ang) + 0.2)
 
-        sphere_grid = np.bincount(
-            bin_num, weights=weights,
-            minlength=num_bins_lat * num_bins_lon).reshape(
-                (num_bins_lat, num_bins_lon)).astype(np.float32)
+        sphere_grid = (
+            np.bincount(bin_num, weights=weights, minlength=num_bins_lat * num_bins_lon)
+            .reshape((num_bins_lat, num_bins_lon))
+            .astype(np.float32)
+        )
 
         # Add the 3 x 3 smoothed votes on top of the original votes for
         # stability (refer to paper)
-        sphere_grid += cv2.filter2D(sphere_grid, -1, (1.0 / 9.0) * np.ones(
-            (3, 3)))
+        sphere_grid += cv2.filter2D(sphere_grid, -1, (1.0 / 9.0) * np.ones((3, 3)))
         return sphere_grid
 
     def __get_best_vps_hypo(self, sphere_grid, vp_hypos):
@@ -376,8 +369,8 @@ class VPDetection(object):
         # Each row is a VP triplet
         # Each column is the z coordinate
         mask = np.logical_and(
-            np.abs(vp_hypos[:, :, 2]) >= self.__tol,
-            np.abs(vp_hypos[:, :, 2]) <= 1.0)
+            np.abs(vp_hypos[:, :, 2]) >= self.__tol, np.abs(vp_hypos[:, :, 2]) <= 1.0
+        )
 
         # Create ID array for VPs
         ids = np.arange(N).astype(np.int)
@@ -386,8 +379,7 @@ class VPDetection(object):
 
         # Calculate their respective lat and lon
         lat = np.arccos(vp_hypos[:, :, 2][mask])
-        lon = np.arctan2(vp_hypos[:, :, 0][mask],
-                         vp_hypos[:, :, 1][mask]) + np.pi
+        lon = np.arctan2(vp_hypos[:, :, 0][mask], vp_hypos[:, :, 1][mask]) + np.pi
 
         # Determine which bin they map to
         la_bin = (lat / bin_size).astype(np.int)
@@ -399,15 +391,13 @@ class VPDetection(object):
         # votes by summing the contributions of each VP for the
         # hypothesis
         weights = sphere_grid[la_bin, lon_bin]
-        votes = np.bincount(ids, weights=weights,
-                            minlength=N).astype(np.float32)
+        votes = np.bincount(ids, weights=weights, minlength=N).astype(np.float32)
 
         # Find best hypothesis by determining which triplet has the largest
         # votes
         best_idx = np.argmax(votes)
         final_vps = vp_hypos[best_idx]
-        vps_2D = self._focal_length * (final_vps[:, :2] /
-                                       final_vps[:, 2][:, None])
+        vps_2D = self._focal_length * (final_vps[:, :2] / final_vps[:, 2][:, None])
         vps_2D += self._principal_point
 
         # Find the coordinate with the largest vertical value
@@ -522,8 +512,7 @@ class VPDetection(object):
         # Reset principal point if we haven't set it yet
         if self._principal_point is None:
             rows, cols = img.shape[:2]
-            self._principal_point = np.array([cols / 2.0, rows / 2.0],
-                                             dtype=np.float32)
+            self._principal_point = np.array([cols / 2.0, rows / 2.0], dtype=np.float32)
 
         # Detect lines
         _ = self.__detect_lines(img)
@@ -566,7 +555,7 @@ class VPDetection(object):
             self.__cluster_lines(self.__vps_hypos)
 
         if save_image is not None and not isinstance(save_image, str):
-            raise ValueError('The save_image path should be a string')
+            raise ValueError("The save_image path should be a string")
 
         img = self.__img.copy()
         if len(img.shape) == 2:  # If grayscale, artificially make into RGB
@@ -583,23 +572,30 @@ class VPDetection(object):
         status[all_clusters] = False
         ind = np.where(status)[0]
         for (x1, y1, x2, y2) in self.__lines[ind]:
-            cv2.line(img, (int(x1), int(y1)), (int(x2), int(y2)), (0, 0, 0), 2,
-                     cv2.LINE_AA)
+            cv2.line(
+                img, (int(x1), int(y1)), (int(x2), int(y2)), (0, 0, 0), 2, cv2.LINE_AA
+            )
 
         # For each cluster of lines, draw them in their right colour
         for i in range(3):
             for (x1, y1, x2, y2) in self.__lines[self.__clusters[i]]:
-                cv2.line(img, (int(x1), int(y1)), (int(x2), int(y2)),
-                         colours[i], 2, cv2.LINE_AA)
+                cv2.line(
+                    img,
+                    (int(x1), int(y1)),
+                    (int(x2), int(y2)),
+                    colours[i],
+                    2,
+                    cv2.LINE_AA,
+                )
 
         # Show image if necessary
         if show_image:
-            cv2.imshow('VP Debug Image', img)
+            cv2.imshow("VP Debug Image", img)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
 
         # Save image if necessary
-        if save_image is not None and save_image != '':
+        if save_image is not None and save_image != "":
             cv2.imwrite(save_image, img)
 
         return img

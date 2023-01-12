@@ -1,47 +1,53 @@
 import argparse
+
 from lu_vp_detect import VPDetection
 
 # Set up argument parser + options
 parser = argparse.ArgumentParser(
-    description="Main script for Lu's Vanishing Point Algorithm")
-parser.add_argument('-i',
-                    '--image-path',
-                    help='Path to the input image',
-                    required=True)
-parser.add_argument('-lt',
-                    '--length-thresh',
-                    default=30,
-                    type=float,
-                    help='Minimum line length (in pixels) for detecting lines')
+    description="Main script for Lu's Vanishing Point Algorithm"
+)
+parser.add_argument("-i", "--image-path", help="Path to the input image", required=True)
 parser.add_argument(
-    '-pp',
-    '--principal-point',
+    "-lt",
+    "--length-thresh",
+    default=30,
+    type=float,
+    help="Minimum line length (in pixels) for detecting lines",
+)
+parser.add_argument(
+    "-pp",
+    "--principal-point",
     default=None,
     nargs=2,
     type=float,
-    help='Principal point of the camera (default is image centre)')
-parser.add_argument('-f',
-                    '--focal-length',
-                    default=1500,
-                    type=float,
-                    help='Focal length of the camera (in pixels)')
-parser.add_argument('-d',
-                    '--debug',
-                    action='store_true',
-                    help='Turn on debug image mode')
-parser.add_argument('-ds',
-                    '--debug-show',
-                    action='store_true',
-                    help='Show the debug image in an OpenCV window')
-parser.add_argument('-dp',
-                    '--debug-path',
-                    default=None,
-                    help='Path for writing the debug image')
-parser.add_argument('-s',
-                    '--seed',
-                    default=None,
-                    type=int,
-                    help='Specify random seed for reproducible results')
+    help="Principal point of the camera (default is image centre)",
+)
+parser.add_argument(
+    "-f",
+    "--focal-length",
+    default=1500,
+    type=float,
+    help="Focal length of the camera (in pixels)",
+)
+parser.add_argument(
+    "-d", "--debug", action="store_true", help="Turn on debug image mode"
+)
+parser.add_argument(
+    "-ds",
+    "--debug-show",
+    action="store_true",
+    help="Show the debug image in an OpenCV window",
+)
+parser.add_argument(
+    "-dp", "--debug-path", default=None, help="Path for writing the debug image"
+)
+parser.add_argument(
+    "-s",
+    "--seed",
+    default=None,
+    type=int,
+    help="Specify random seed for reproducible results",
+)
 args = parser.parse_args()
 
 
@@ -56,17 +62,17 @@ def main():
     debug_path = args.debug_path
     seed = args.seed
 
-    print('Input path: {}'.format(input_path))
-    print('Seed: {}'.format(seed))
-    print('Line length threshold: {}'.format(length_thresh))
-    print('Focal length: {}'.format(focal_length))
+    print("Input path: {}".format(input_path))
+    print("Seed: {}".format(seed))
+    print("Line length threshold: {}".format(length_thresh))
+    print("Focal length: {}".format(focal_length))
 
     # Create object
     vpd = VPDetection(length_thresh, principal_point, focal_length, seed)
 
     # Run VP detection algorithm
     vps = vpd.find_vps(input_path)
-    print('Principal point: {}'.format(vpd.principal_point))
+    print("Principal point: {}".format(vpd.principal_point))
 
     # Show VP information
     print("The vanishing points in 3D space are: ")
