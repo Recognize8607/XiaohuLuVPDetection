@@ -30,6 +30,7 @@ class VPDetection(object):
         principal_point=None,
         focal_length=1500,
         angle_tol=np.pi / 3,
+        lsd_refine=cv2.LSD_REFINE_STD,
         seed=None,
     ):
         self._length_thresh = length_thresh
@@ -44,6 +45,7 @@ class VPDetection(object):
         self._angle_thresh = angle_tol / 10  # For displaying debug image
         self.__lines = None  # Stores the line detections internally
         self.__zero_value = 0.001  # Threshold to check augmented coordinate
+        self._lsd_refine = lsd_refine
         # Anything less than __tol gets set to this
         self.__seed = seed  # Set seed for reproducibility
         noise_ratio = 0.5  # Outlier/inlier ratio for RANSAC estimation
@@ -164,6 +166,32 @@ class VPDetection(object):
         self._angle_tol = value
 
     @property
+    def lsd_refine(self):
+        """
+        LSD refinement method
+
+        Returns:
+            The way found lines will be refined
+        """
+        return self._lsd_refine
+
+    @lsd_refine.setter
+    def lsd_refine(self, value):
+        """
+        LSD refinement method
+
+        Args:
+            value: The way found lines will be refined
+
+        Raises:
+            ValueError: If the input doesn't match any of the methods
+        """
+        if value not in [cv2.LSD_REFINE_NONE, cv2.LSD_REFINE_STD, cv2.LSD_REFINE_ADV]:
+            raise ValueError("Invalid LSD refine: {}".format(value))
+
+        self._lsd_refine = value
+
+    @property
     def vps(self):
         """
         Vanishing points of the image in 3D space.
@@ -195,8 +223,8 @@ class VPDetection(object):
         else:
             img_copy = img
 
-        # Create LSD detector with default parameters
-        lsd = cv2.createLineSegmentDetector(0)
+        # Create LSD detector
+        lsd = cv2.createLineSegmentDetector(refine=self._lsd_refine)
 
         # Detect lines in the image
         # Returns a NumPy array of type N x 1 x 4 of float32
