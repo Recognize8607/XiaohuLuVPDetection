@@ -46,6 +46,7 @@ class VPDetection(object):
         self.__lines = None  # Stores the line detections internally
         self.__zero_value = 0.001  # Threshold to check augmented coordinate
         self._lsd_refine = lsd_refine
+        self.__mask = None
         # Anything less than __tol gets set to this
         self.__seed = seed  # Set seed for reproducibility
         noise_ratio = 0.5  # Outlier/inlier ratio for RANSAC estimation
@@ -213,7 +214,7 @@ class VPDetection(object):
         """
         return self._vps_2D
 
-    def __detect_lines(self, img):
+    def __detect_lines(self, img, mask=None):
         """
         Detects lines using OpenCV LSD Detector
         """
@@ -234,6 +235,21 @@ class VPDetection(object):
 
         # Remove singleton dimension
         lines = lines[:, 0]
+
+        if mask is not None:
+            # Iterate over the lines
+            for line in lines:
+                # Get the start and end points of the line
+                x1, y1, x2, y2 = line
+                # Bound the points to the image size
+                x1 = np.clip(x1, 0, img.shape[0] - 1).astype(int)
+                y1 = np.clip(y1, 0, img.shape[1] - 1).astype(int)
+                x2 = np.clip(x2, 0, img.shape[0] - 1).astype(int)
+                y2 = np.clip(y2, 0, img.shape[1] - 1).astype(int)
+                # Check if points are False in the mask
+                # and remove the lines from their array if they are
+                if not mask[x1, y1] or not mask[x2, y2]:
+                    lines = np.delete(lines, np.where(lines == line), axis=0)
 
         # Filter out the lines whose length is lower than the threshold
         dx = lines[:, 2] - lines[:, 0]
@@ -548,13 +564,15 @@ class VPDetection(object):
             np.where(np.logical_and(mask, idx_ang == i))[0] for i in range(3)
         ]
 
-    def find_vps(self, img):
+    def find_vps(self, img, mask=None):
         """
         Find the vanishing points given the input image
 
         Args:
             img: Either the path to the image or the image read in with
          `cv2.imread`
+            mask: A binary mask of the same shape as the image. This is used
+            to ignore certain regions of the image when detecting lines
 
         Returns:
             A numpy array where each row is a point and each column is a
@@ -567,6 +585,9 @@ class VPDetection(object):
         if isinstance(img, str):
             img = cv2.imread(img, -1)
 
+        if mask is not None and mask.shape != img.shape:
+            raise ValueError("The mask must have the same shape as the image")
+
         self.__img = img  # Keep a copy for later
 
         # Reset principal point if we haven't set it yet
@@ -575,7 +596,7 @@ class VPDetection(object):
             self._principal_point = np.array([cols / 2.0, rows / 2.0], dtype=np.float32)
 
         # Detect lines
-        _ = self.__detect_lines(img)
+        _ = self.__detect_lines(img, mask)
 
         # Find VP candidates
         vps_hypos = self.__find_vp_hypotheses_two_lines()
