@@ -1,4 +1,5 @@
 import argparse
+import os
 
 import numpy as np
 
@@ -81,31 +82,53 @@ def main():
     # Create object
     vpd = VPDetection(length_thresh, principal_point, focal_length, angle_tol, seed)
 
-    # Run VP detection algorithm
-    vps = vpd.find_vps(input_path)
-    print("Principal point: {}".format(vpd.principal_point))
+    if os.path.isdir(input_path):
+        print("Input path is a directory")
+        # Add only files to the list
+        images = [
+            os.path.join(input_path, f)
+            for f in os.listdir(input_path)
+            if os.path.isfile(os.path.join(input_path, f))
+        ]
+    if os.path.isfile(input_path):
+        images = [input_path]
 
-    # Show VP information
-    print("The vanishing points in 3D space are: ")
-    for i, vp in enumerate(vps):
-        print("Vanishing Point {:d}: {}".format(i + 1, vp))
+    for image in images:
+        # Run VP detection algorithm
+        vps = vpd.find_vps(image)
+        print("Principal point: {}".format(vpd.principal_point))
 
-    vp2D = vpd.vps_2D
-    print("\nThe vanishing points in image coordinates are: ")
-    for i, vp in enumerate(vp2D):
-        print("Vanishing Point {:d}: {}".format(i + 1, vp))
+        # Show VP information
+        print("The vanishing points in 3D space are: ")
+        for i, vp in enumerate(vps):
+            print("Vanishing Point {:d}: {}".format(i + 1, vp))
 
-    # Extra stuff
-    if debug_mode or debug_show:
-        st = "Creating debug image"
-        if debug_show:
-            st += " and showing to the screen"
+        vp2D = vpd.vps_2D
+        print("\nThe vanishing points in image coordinates are: ")
+        for i, vp in enumerate(vp2D):
+            print("Vanishing Point {:d}: {}".format(i + 1, vp))
+
+        # Extra stuff
+        debug_image = None
         if debug_path is not None:
-            st += "\nAlso writing debug image to: {}".format(debug_path)
+            debug_image, ext = os.path.splitext(debug_path)
+            if len(ext) == 0:
+                if not os.path.exists(debug_path):
+                    os.makedirs(debug_path)
+                debug_image = os.path.join(debug_path, os.path.basename(image))
+            else:
+                debug_image = debug_path
 
-        if debug_show or debug_path is not None:
-            print(st)
-            vpd.create_debug_VP_image(debug_show, debug_path)
+        if debug_mode or debug_show:
+            st = "Creating debug image"
+            if debug_show:
+                st += " and showing to the screen"
+            if debug_path is not None:
+                st += "\nAlso writing debug image to: {}".format(debug_image)
+
+            if debug_show or debug_path is not None:
+                print(st)
+                vpd.create_debug_VP_image(debug_show, debug_image)
 
 
 if __name__ == "__main__":
