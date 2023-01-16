@@ -585,7 +585,7 @@ class VPDetection(object):
         if isinstance(img, str):
             img = cv2.imread(img, -1)
 
-        if mask is not None and mask.shape != img.shape:
+        if mask is not None and mask.shape != img.shape[:2]:
             raise ValueError("The mask must have the same shape as the image")
 
         self.__img = img  # Keep a copy for later
