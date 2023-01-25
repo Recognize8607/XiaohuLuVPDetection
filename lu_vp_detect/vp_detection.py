@@ -225,7 +225,7 @@ class VPDetection(object):
             img_copy = img
 
         # Create LSD detector
-        lsd = cv2.createLineSegmentDetector(_refine=self._lsd_refine)
+        lsd = cv2.createLineSegmentDetector(refine=self._lsd_refine)
 
         # Detect lines in the image
         # Returns a NumPy array of type N x 1 x 4 of float32
